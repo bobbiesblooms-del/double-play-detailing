@@ -430,8 +430,8 @@
       document.getElementById('vehicle-error').style.display = 'none';
     }
 
-    // save booking to localStorage and show success
-    document.getElementById('booking-form').addEventListener('submit', function(e) {
+    // submit to Formspree and show success
+    document.getElementById('booking-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       if (!document.getElementById('vehicle-input').value) {
         document.getElementById('vehicle-error').style.display = 'block';
@@ -442,19 +442,28 @@
       btn.disabled = true;
       btn.textContent = 'Submitting…';
 
-      const data = Object.fromEntries(new FormData(this).entries());
-      data.submittedAt = new Date().toISOString();
+      try {
+        const res = await fetch('https://formspree.io/f/meenzzbg', {
+          method: 'POST',
+          body: new FormData(this),
+          headers: { 'Accept': 'application/json' }
+        });
 
-      const bookings = JSON.parse(localStorage.getItem('dpd_bookings') || '[]');
-      bookings.push(data);
-      localStorage.setItem('dpd_bookings', JSON.stringify(bookings));
-
-      setTimeout(() => {
-        this.style.display = 'none';
-        const banner = document.getElementById('success-banner');
-        banner.classList.add('show');
-        banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 800);
+        if (res.ok) {
+          this.style.display = 'none';
+          const banner = document.getElementById('success-banner');
+          banner.classList.add('show');
+          banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'Request Appointment →';
+          alert('Something went wrong. Please try again or call us directly.');
+        }
+      } catch {
+        btn.disabled = false;
+        btn.textContent = 'Request Appointment →';
+        alert('Something went wrong. Please try again or call us directly.');
+      }
     });
 
     // ── ADMIN PANEL ──
